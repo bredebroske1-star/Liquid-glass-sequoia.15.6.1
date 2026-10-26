@@ -1,0 +1,67 @@
+name: Glass Desktop releases
+
+on:
+  push:
+    branches:
+      - main
+    tags:
+      - "glass-desktop-v*"
+  schedule:
+    - cron: "0 0 * * *"
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  package:
+    runs-on: macos-15
+    steps:
+      - name: Check out source
+        uses: actions/checkout@v4
+
+      - name: Package universal macOS app
+        run: |
+          chmod +x GlassDesktop/package-macos.sh
+          GlassDesktop/package-macos.sh
+
+      - name: Publish stable release
+        if: startsWith(github.ref, 'refs/tags/glass-desktop-v')
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          gh release create "$GITHUB_REF_NAME" \
+            "GlassDesktop/dist/Glass-Desktop-macOS.dmg" \
+            --verify-tag \
+            --latest \
+            --title "Glass Desktop ${GITHUB_REF_NAME#glass-desktop-v} — Stable" \
+            --notes "Universal Intel and Apple silicon installer for Glass Desktop. Includes Spotlight-style search, an Ollama Cloud AI assistant, and optional local Ollama inference. See the repository README for setup, cloud API key, and first-launch instructions."
+
+      - name: Publish or update nightly release
+        if: github.ref == 'refs/heads/main' || github.event_name == 'schedule'
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          gh api --method PATCH "repos/${GITHUB_REPOSITORY}/git/refs/tags/nightly" \
+            -f sha="$GITHUB_SHA" \
+            -F force=true 2>/dev/null || \
+          gh api --method POST "repos/${GITHUB_REPOSITORY}/git/refs" \
+            -f ref="refs/tags/nightly" \
+            -f sha="$GITHUB_SHA"
+
+          if gh release view nightly >/dev/null 2>&1; then
+            gh release edit nightly \
+              --prerelease \
+              --title "Glass Desktop Nightly" \
+              --notes "Latest automated development build from the main branch. This prerelease may be less stable than the stable release."
+            gh release upload nightly \
+              "GlassDesktop/dist/Glass-Desktop-macOS.dmg" \
+              --clobber
+          else
+            gh release create nightly \
+              "GlassDesktop/dist/Glass-Desktop-macOS.dmg" \
+              --target "$GITHUB_SHA" \
+              --prerelease \
+              --title "Glass Desktop Nightly" \
+              --notes "Latest automated development build from the main branch. This prerelease may be less stable than the stable release."
+          fi
