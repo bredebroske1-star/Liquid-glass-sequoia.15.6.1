@@ -30,12 +30,21 @@ jobs:
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
-          gh release create "$GITHUB_REF_NAME" \
-            "GlassDesktop/dist/Glass-Desktop-macOS.dmg" \
-            --verify-tag \
-            --latest \
-            --title "Glass Desktop ${GITHUB_REF_NAME#glass-desktop-v} — Stable" \
-            --notes "Universal Intel and Apple silicon installer for Glass Desktop. Includes Spotlight-style search, an Ollama Cloud AI assistant, and optional local Ollama inference. See the repository README for setup, cloud API key, and first-launch instructions."
+          title="Glass Desktop ${GITHUB_REF_NAME#glass-desktop-v} — Stable"
+          notes="Universal Intel and Apple silicon installer for Glass Desktop. Includes Spotlight-style search, an Ollama Cloud AI assistant, and optional local Ollama inference. See the repository README for setup, cloud API key, and first-launch instructions."
+          if gh release view "$GITHUB_REF_NAME" >/dev/null 2>&1; then
+            gh release edit "$GITHUB_REF_NAME" --title "$title" --notes "$notes"
+            gh release upload "$GITHUB_REF_NAME" \
+              "GlassDesktop/dist/Glass-Desktop-macOS.dmg" \
+              --clobber
+          else
+            gh release create "$GITHUB_REF_NAME" \
+              "GlassDesktop/dist/Glass-Desktop-macOS.dmg" \
+              --verify-tag \
+              --latest \
+              --title "$title" \
+              --notes "$notes"
+          fi
 
       - name: Publish or update nightly release
         if: github.ref == 'refs/heads/main' || github.event_name == 'schedule'
