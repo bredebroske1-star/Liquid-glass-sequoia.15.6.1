@@ -4,7 +4,7 @@ A small desktop customization app for macOS Sequoia 15.6.1 and newer. The univer
 
 ## Download
 
-**Latest release: [Liquid Glass 2.3.0](https://github.com/bredebroske1-star/Liquid-glass-sequoia.15.6.1/releases/tag/v2.3.0)**
+**Latest Liquid Glass release: [Liquid Glass 2.3.0](https://github.com/bredebroske1-star/Liquid-glass-sequoia.15.6.1/releases/tag/v2.3.0)**
 
 [Download the macOS installer](https://github.com/bredebroske1-star/Liquid-glass-sequoia.15.6.1/releases/download/v2.3.0/Liquid-Glass-macOS.dmg)
 
